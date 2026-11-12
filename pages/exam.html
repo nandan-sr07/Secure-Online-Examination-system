@@ -1,0 +1,1434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Exam - SecureExam</title>
+
+  <!-- Global stylesheet -->
+  <link rel="stylesheet" href="../css/style.css" />
+  <!-- Exam-specific stylesheet -->
+  <link rel="stylesheet" href="../css/exam.css" />
+
+  <style>
+    /* ============================================================
+       INLINE EXAM STYLES
+       These supplement exam.css with layout and state-driven rules.
+       ============================================================ */
+
+    /* ── Reset & base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #F8F7F0;
+      color: #252A26;
+      height: 100vh;
+      overflow: hidden; /* prevent scrolling on body; panels scroll independently */
+    }
+
+    /* ── TOP EXAM BAR ── */
+    .exam-topbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 64px;
+      background: #183D32;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      z-index: 1000;
+      gap: 12px;
+    }
+
+    .exam-topbar__left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .exam-topbar__logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .exam-topbar__logo-icon {
+      font-size: 1.4rem;
+    }
+
+    .exam-topbar__logo-text {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #A3B18A;
+      letter-spacing: 0.04em;
+    }
+
+    .divider-v {
+      width: 1px;
+      height: 30px;
+      background: rgba(255,255,255,0.2);
+    }
+
+    .exam-topbar__exam-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #ffffff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 220px;
+    }
+
+    .subject-badge {
+      background: #A3B18A;
+      color: #183D32;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      white-space: nowrap;
+      letter-spacing: 0.04em;
+    }
+
+    /* ── Center section ── */
+    .exam-topbar__center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      flex-shrink: 0;
+    }
+
+    .exam-timer {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: 0.08em;
+      line-height: 1;
+      transition: color 0.3s;
+    }
+
+    .exam-timer.timer--warning {
+      color: #ff6b6b;
+      animation: pulse-timer 1s infinite;
+    }
+
+    @keyframes pulse-timer {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.55; }
+    }
+
+    .exam-status-badge {
+      background: rgba(163,177,138,0.25);
+      border: 1px solid #A3B18A;
+      color: #DDE5D0;
+      font-size: 0.62rem;
+      font-weight: 700;
+      padding: 2px 10px;
+      border-radius: 20px;
+      letter-spacing: 0.08em;
+    }
+
+    /* ── Right section ── */
+    .exam-topbar__right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex: 1;
+      justify-content: flex-end;
+    }
+
+    .exam-topbar__student {
+      font-size: 0.85rem;
+      color: #DDE5D0;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .exam-topbar__qcount {
+      background: #808000;
+      color: #ffffff;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 5px 14px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+
+    /* ── MAIN LAYOUT ── */
+    .exam-layout {
+      display: flex;
+      height: 100vh;
+      padding-top: 64px;
+    }
+
+    /* ── LEFT PANEL ── */
+    .exam-panel-left {
+      flex: 0 0 70%;
+      width: 70%;
+      overflow-y: auto;
+      padding: 28px 32px 100px;
+      background: #F8F7F0;
+    }
+
+    /* ── Question header ── */
+    .question-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .question-header__label {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #183D32;
+    }
+
+    .question-subject-tag {
+      background: #DDE5D0;
+      color: #183D32;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 12px;
+    }
+
+    .marks-badge {
+      background: #808000;
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 12px;
+      margin-left: auto;
+    }
+
+    /* ── Question card ── */
+    .question-card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 28px;
+      box-shadow: 0 2px 12px rgba(24,61,50,0.08);
+      margin-bottom: 24px;
+    }
+
+    /* ── UX DETERRENT NOTE:
+       Right-click / copy disable below is a UX deterrent only.
+       It does NOT provide real security. A determined user can bypass
+       it via DevTools, browser extensions, or view-source.
+       Real content protection requires server-side access control:
+       serve questions one at a time via authenticated API, with
+       short-lived tokens, so the full exam is never loaded client-side. ── */
+    .question-text-area {
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .question-text {
+      font-size: 1.1rem;
+      line-height: 1.7;
+      color: #252A26;
+      margin-bottom: 24px;
+    }
+
+    /* ── MCQ Options ── */
+    .options-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .option-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: #ffffff;
+      border: 2px solid #e5e5e5;
+      border-radius: 10px;
+      padding: 14px 18px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s, transform 0.1s;
+      user-select: none;
+    }
+
+    .option-card:hover {
+      border-color: #A3B18A;
+      background: #f5f7f2;
+      transform: translateX(2px);
+    }
+
+    .option-card.selected {
+      border-color: #808000;
+      background: #f0f0d8;
+    }
+
+    .option-card.correct {
+      border-color: #2e7d32;
+      background: #e8f5e9;
+    }
+
+    .option-card.incorrect {
+      border-color: #c62828;
+      background: #ffebee;
+    }
+
+    .option-label-circle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #DDE5D0;
+      color: #183D32;
+      font-weight: 800;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .option-card.selected .option-label-circle {
+      background: #808000;
+      color: #fff;
+    }
+
+    .option-card.correct .option-label-circle {
+      background: #2e7d32;
+      color: #fff;
+    }
+
+    .option-card.incorrect .option-label-circle {
+      background: #c62828;
+      color: #fff;
+    }
+
+    .option-text {
+      font-size: 0.98rem;
+      color: #252A26;
+      line-height: 1.5;
+    }
+
+    /* ── Navigation bar ── */
+    .question-nav {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn-nav {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .btn-nav:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .btn-prev {
+      background: #fff;
+      border-color: #d4d4d4;
+      color: #252A26;
+    }
+
+    .btn-prev:hover:not(:disabled) {
+      border-color: #808000;
+      color: #808000;
+    }
+
+    .btn-review {
+      background: #fff8e1;
+      border-color: #f57f17;
+      color: #f57f17;
+    }
+
+    .btn-review:hover {
+      background: #fff3cd;
+    }
+
+    .btn-save-next {
+      background: #808000;
+      color: #fff;
+      margin-left: auto;
+    }
+
+    .btn-save-next:hover {
+      background: #666600;
+    }
+
+    .btn-submit-exam {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 26px;
+      border-radius: 8px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      cursor: pointer;
+      background: #c62828;
+      color: #fff;
+      border: none;
+      margin-top: 20px;
+      transition: background 0.2s;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .btn-submit-exam:hover {
+      background: #b71c1c;
+    }
+
+    /* ── RIGHT PANEL ── */
+    .exam-panel-right {
+      flex: 0 0 30%;
+      width: 30%;
+      overflow-y: auto;
+      background: #ffffff;
+      border-left: 1px solid #e5e5e5;
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .palette-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #183D32;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #DDE5D0;
+    }
+
+    /* ── Color legend ── */
+    .palette-legend {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.8rem;
+      color: #525252;
+    }
+
+    .legend-dot {
+      width: 22px;
+      height: 22px;
+      border-radius: 4px;
+      flex-shrink: 0;
+      border: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .legend-dot--answered    { background: #4caf50; }
+    .legend-dot--review      { background: #f57f17; }
+    .legend-dot--not-visited { background: #e5e5e5; border: 1px solid #a3a3a3; }
+    .legend-dot--not-ans     { background: #fff; border: 2px solid #a3a3a3; }
+    .legend-dot--current     { background: #1976d2; }
+
+    /* ── Palette grid ── */
+    .palette-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+
+    .palette-btn {
+      aspect-ratio: 1;
+      border-radius: 6px;
+      border: 2px solid transparent;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      background: #e5e5e5;
+      color: #404040;
+    }
+
+    .palette-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .palette-btn.state-answered   { background: #4caf50; color: #fff; border-color: #388e3c; }
+    .palette-btn.state-review     { background: #f57f17; color: #fff; border-color: #e65100; }
+    .palette-btn.state-current    { background: #1976d2; color: #fff; border-color: #1565c0; }
+    .palette-btn.state-not-ans    { background: #fff; color: #404040; border-color: #a3a3a3; }
+    .palette-btn.state-not-visited{ background: #e5e5e5; color: #737373; border-color: #d4d4d4; }
+
+    /* ── Exam info panel ── */
+    .exam-info-panel {
+      background: #F8F7F0;
+      border-radius: 10px;
+      padding: 16px;
+      margin-top: auto;
+    }
+
+    .exam-info-panel h4 {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #183D32;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #DDE5D0;
+    }
+
+    .exam-info-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: #525252;
+      padding: 4px 0;
+    }
+
+    .exam-info-row span:last-child {
+      font-weight: 600;
+      color: #252A26;
+    }
+
+    /* ── SUBMIT MODAL ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 2000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.modal--open {
+      display: flex;
+    }
+
+    .modal-box {
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 36px 32px;
+      max-width: 480px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+      animation: modalSlideIn 0.25s ease;
+    }
+
+    @keyframes modalSlideIn {
+      from { transform: translateY(-20px); opacity: 0; }
+      to   { transform: translateY(0);     opacity: 1; }
+    }
+
+    .modal-box h2 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #183D32;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .modal-summary-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 18px;
+      font-size: 0.9rem;
+    }
+
+    .modal-summary-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .modal-summary-table td:first-child {
+      color: #525252;
+    }
+
+    .modal-summary-table td:last-child {
+      font-weight: 700;
+      color: #252A26;
+      text-align: right;
+    }
+
+    .modal-warning {
+      background: #fff8e1;
+      border-left: 4px solid #f57f17;
+      padding: 12px 16px;
+      border-radius: 0 8px 8px 0;
+      font-size: 0.85rem;
+      color: #7c4a00;
+      margin-bottom: 20px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+
+    .btn-cancel {
+      padding: 10px 22px;
+      border-radius: 8px;
+      border: 2px solid #d4d4d4;
+      background: #fff;
+      color: #525252;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    .btn-cancel:hover { border-color: #808000; color: #808000; }
+
+    .btn-confirm-submit {
+      padding: 10px 22px;
+      border-radius: 8px;
+      border: none;
+      background: #c62828;
+      color: #fff;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-confirm-submit:hover { background: #b71c1c; }
+
+    /* ── AUTO-SUBMIT OVERLAY ── */
+    .autosubmit-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.82);
+      z-index: 3000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 16px;
+      text-align: center;
+    }
+
+    .autosubmit-overlay.visible {
+      display: flex;
+    }
+
+    .autosubmit-overlay .autosubmit-icon {
+      font-size: 4rem;
+    }
+
+    .autosubmit-overlay h2 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .autosubmit-overlay p {
+      font-size: 1rem;
+      color: #DDE5D0;
+      max-width: 440px;
+    }
+
+    /* ── Toast container (from main.js) ── */
+    #toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 4000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* ── Scrollbar styling ── */
+    .exam-panel-left::-webkit-scrollbar,
+    .exam-panel-right::-webkit-scrollbar { width: 6px; }
+    .exam-panel-left::-webkit-scrollbar-track,
+    .exam-panel-right::-webkit-scrollbar-track { background: transparent; }
+    .exam-panel-left::-webkit-scrollbar-thumb,
+    .exam-panel-right::-webkit-scrollbar-thumb {
+      background: #A3B18A;
+      border-radius: 3px;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .exam-layout { flex-direction: column; overflow-y: auto; }
+      .exam-panel-left  { flex: none; width: 100%; overflow: visible; padding-bottom: 0; }
+      .exam-panel-right { flex: none; width: 100%; border-left: none; border-top: 1px solid #e5e5e5; }
+      .exam-topbar__exam-title { display: none; }
+      body { overflow: auto; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================
+       TOP EXAM BAR (Fixed, Distraction-Free)
+       ============================================================ -->
+  <header class="exam-topbar" role="banner">
+
+    <!-- Left: Logo | Exam Title | Subject Badge -->
+    <div class="exam-topbar__left">
+      <div class="exam-topbar__logo">
+        <span class="exam-topbar__logo-icon" aria-hidden="true">📝</span>
+        <span class="exam-topbar__logo-text">SecureExam</span>
+      </div>
+      <div class="divider-v" aria-hidden="true"></div>
+      <span class="exam-topbar__exam-title" id="topbar-exam-title">Computer Science Fundamentals</span>
+      <span class="subject-badge" id="topbar-subject">CS</span>
+    </div>
+
+    <!-- Center: Timer | Status Badge -->
+    <div class="exam-topbar__center">
+      <div class="exam-timer" id="exam-timer" aria-live="polite" aria-label="Time Remaining">
+        Time Remaining: <span id="timer-display">45:00</span>
+      </div>
+      <span class="exam-status-badge">EXAM IN PROGRESS</span>
+    </div>
+
+    <!-- Right: Student Name | Question Count -->
+    <div class="exam-topbar__right">
+      <span class="exam-topbar__student" id="topbar-student">Student Name</span>
+      <span class="exam-topbar__qcount" id="topbar-qcount">Q 1 / 15</span>
+    </div>
+
+  </header>
+
+  <!-- ============================================================
+       MAIN TWO-PANEL LAYOUT
+       ============================================================ -->
+  <main class="exam-layout">
+
+    <!-- ── LEFT PANEL: Question Area ── -->
+    <section class="exam-panel-left" aria-label="Question area">
+
+      <!-- Question header -->
+      <div class="question-header">
+        <span class="question-header__label" id="question-label">Question 1 of 15</span>
+        <span class="question-subject-tag" id="question-subject-tag">Data Structures</span>
+        <span class="marks-badge" id="question-marks">2 Marks</span>
+      </div>
+
+      <!-- Question card -->
+      <div class="question-card">
+        <!-- UX deterrent: see inline-style comment above for security note -->
+        <div class="question-text-area" id="question-text-area">
+          <p class="question-text" id="question-text">Loading question…</p>
+
+          <!-- MCQ Options -->
+          <ul class="options-list" id="options-list" role="radiogroup" aria-label="Answer options">
+            <!-- Rendered by exam.js -->
+          </ul>
+        </div>
+      </div>
+
+      <!-- Navigation bar -->
+      <div class="question-nav" role="navigation" aria-label="Question navigation">
+        <button class="btn-nav btn-prev" id="btn-prev" aria-label="Previous question">
+          ← Previous
+        </button>
+        <button class="btn-nav btn-review" id="btn-mark-review" aria-label="Mark for review">
+          Mark for Review 🔖
+        </button>
+        <button class="btn-nav btn-save-next" id="btn-save-next" aria-label="Save and go to next question">
+          Save &amp; Next →
+        </button>
+      </div>
+
+      <!-- Submit Exam button (shown from Q5 onward) -->
+      <button class="btn-submit-exam" id="btn-open-submit" aria-label="Submit examination" style="display:none;">
+        ⚠ Submit Exam
+      </button>
+
+    </section>
+
+    <!-- ── RIGHT PANEL: Question Palette & Info ── -->
+    <aside class="exam-panel-right" aria-label="Question palette">
+
+      <h2 class="palette-title">Question Palette</h2>
+
+      <!-- Color legend -->
+      <div class="palette-legend" aria-label="Question status legend">
+        <div class="legend-item">
+          <div class="legend-dot legend-dot--answered" aria-hidden="true"></div>
+          <span>Answered</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot legend-dot--review" aria-hidden="true"></div>
+          <span>Marked for Review</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot legend-dot--not-visited" aria-hidden="true"></div>
+          <span>Not Visited</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot legend-dot--not-ans" aria-hidden="true"></div>
+          <span>Not Answered (visited)</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot legend-dot--current" aria-hidden="true"></div>
+          <span>Current Question</span>
+        </div>
+      </div>
+
+      <!-- Palette grid of question numbers -->
+      <div class="palette-grid" id="palette-grid" role="list" aria-label="Question numbers">
+        <!-- Rendered by JS -->
+      </div>
+
+      <!-- Exam info panel -->
+      <div class="exam-info-panel">
+        <h4>Exam Information</h4>
+        <div class="exam-info-row">
+          <span>Exam</span>
+          <span>CS Fundamentals</span>
+        </div>
+        <div class="exam-info-row">
+          <span>Duration</span>
+          <span>60 Minutes</span>
+        </div>
+        <div class="exam-info-row">
+          <span>Total Questions</span>
+          <span>15</span>
+        </div>
+        <div class="exam-info-row">
+          <span>Total Marks</span>
+          <span>30</span>
+        </div>
+        <div class="exam-info-row">
+          <span>Passing Marks</span>
+          <span>18</span>
+        </div>
+      </div>
+
+    </aside>
+  </main>
+
+  <!-- ============================================================
+       SUBMIT CONFIRMATION MODAL
+       ============================================================ -->
+  <div class="modal-overlay" id="submit-modal" role="dialog" aria-modal="true"
+       aria-labelledby="submit-modal-title">
+    <div class="modal-box">
+      <h2 id="submit-modal-title">⚠ Submit Examination?</h2>
+
+      <table class="modal-summary-table" aria-label="Exam submission summary">
+        <tbody>
+          <tr>
+            <td>Answered</td>
+            <td id="modal-answered">0</td>
+          </tr>
+          <tr>
+            <td>Not Answered</td>
+            <td id="modal-not-answered">0</td>
+          </tr>
+          <tr>
+            <td>Marked for Review</td>
+            <td id="modal-review">0</td>
+          </tr>
+          <tr>
+            <td><strong>Total Questions</strong></td>
+            <td><strong>15</strong></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="modal-warning" role="alert">
+        ⚠ Once submitted, you cannot change your answers.
+        Make sure you have reviewed all questions before submitting.
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" id="btn-cancel-submit">Cancel</button>
+        <button class="btn-confirm-submit" id="btn-confirm-submit">Submit Exam</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       AUTO-SUBMIT OVERLAY (shown when timer reaches 0)
+       ============================================================ -->
+  <div class="autosubmit-overlay" id="autosubmit-overlay" role="alertdialog"
+       aria-labelledby="autosubmit-title" aria-live="assertive">
+    <div class="autosubmit-icon" aria-hidden="true">⏰</div>
+    <h2 id="autosubmit-title">Time's Up!</h2>
+    <p>Your exam has been automatically submitted. Please wait while we process your results…</p>
+  </div>
+
+  <!-- ============================================================
+       SCRIPTS
+       ============================================================ -->
+  <script src="../js/main.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/exam.js"></script>
+
+  <script>
+    /* ============================================================
+       EXAM PAGE — INLINE CONTROLLER
+       Initialises the exam interface. All DOM queries are done
+       after DOMContentLoaded. Sensitive data (e.g. answers) must
+       be verified server-side; sessionStorage is for UX only.
+       ============================================================ */
+    (function () {
+      'use strict';
+
+      /* ── Auth guard ── */
+      if (window.Auth && typeof window.Auth.requireAuth === 'function') {
+        window.Auth.requireAuth('student');
+      }
+
+      /* ── Enable before-unload warning (UX guard for accidental navigation) ── */
+      if (window.AppUtils && typeof window.AppUtils.beforeUnloadWarning === 'function') {
+        window.AppUtils.beforeUnloadWarning(true);
+      }
+
+      /* ──────────────────────────────────────────────────────────
+         SAMPLE EXAM DATA (15 questions)
+         In production, questions are fetched from the server one
+         at a time via an authenticated API endpoint.
+         ────────────────────────────────────────────────────────── */
+      var EXAM_ID        = 'cs_fundamentals_001';
+      var EXAM_DURATION  = 60 * 60; // 60 minutes in seconds
+      var TOTAL_QUESTIONS = 15;
+
+      var sampleQuestions = [
+        {
+          id: 1, subject: 'Data Structures', marks: 2,
+          text: 'Which data structure uses LIFO (Last In, First Out) order for element access?',
+          options: ['Queue', 'Stack', 'Linked List', 'Binary Tree'],
+          correct: 1
+        },
+        {
+          id: 2, subject: 'Algorithms', marks: 2,
+          text: 'What is the time complexity of Binary Search in the worst case?',
+          options: ['O(n)', 'O(n log n)', 'O(log n)', 'O(1)'],
+          correct: 2
+        },
+        {
+          id: 3, subject: 'Networking', marks: 2,
+          text: 'Which layer of the OSI model is responsible for end-to-end communication and error recovery?',
+          options: ['Network Layer', 'Data Link Layer', 'Transport Layer', 'Session Layer'],
+          correct: 2
+        },
+        {
+          id: 4, subject: 'Operating Systems', marks: 2,
+          text: 'Which scheduling algorithm gives the shortest average waiting time for a set of processes?',
+          options: ['FCFS', 'Round Robin', 'SJF (Shortest Job First)', 'Priority Scheduling'],
+          correct: 2
+        },
+        {
+          id: 5, subject: 'Databases', marks: 2,
+          text: 'Which SQL command is used to retrieve data from a database table?',
+          options: ['INSERT', 'UPDATE', 'DELETE', 'SELECT'],
+          correct: 3
+        },
+        {
+          id: 6, subject: 'Data Structures', marks: 2,
+          text: 'In a min-heap, the root node always contains the:',
+          options: ['Maximum value', 'Minimum value', 'Median value', 'Average value'],
+          correct: 1
+        },
+        {
+          id: 7, subject: 'Algorithms', marks: 2,
+          text: 'Which sorting algorithm has the best average-case time complexity?',
+          options: ['Bubble Sort', 'Insertion Sort', 'Merge Sort', 'Selection Sort'],
+          correct: 2
+        },
+        {
+          id: 8, subject: 'Networking', marks: 2,
+          text: 'What does "HTTP" stand for?',
+          options: [
+            'HyperText Transfer Protocol',
+            'High Transfer Text Protocol',
+            'HyperText Transit Protocol',
+            'Hyper Terminal Transfer Protocol'
+          ],
+          correct: 0
+        },
+        {
+          id: 9, subject: 'Operating Systems', marks: 2,
+          text: 'What is a "deadlock" in the context of operating systems?',
+          options: [
+            'When two processes compete for the same CPU core',
+            'When a process runs indefinitely without terminating',
+            'When two or more processes wait indefinitely for resources held by each other',
+            'When the OS forcibly terminates a process'
+          ],
+          correct: 2
+        },
+        {
+          id: 10, subject: 'Databases', marks: 2,
+          text: 'Which normal form eliminates transitive functional dependencies?',
+          options: ['1NF', '2NF', '3NF', 'BCNF'],
+          correct: 2
+        },
+        {
+          id: 11, subject: 'Data Structures', marks: 2,
+          text: 'Which traversal of a Binary Search Tree produces a sorted output?',
+          options: ['Pre-order', 'Post-order', 'In-order', 'Level-order'],
+          correct: 2
+        },
+        {
+          id: 12, subject: 'Algorithms', marks: 2,
+          text: 'Dynamic programming is best described as:',
+          options: [
+            'Solving problems by breaking them into overlapping sub-problems and storing results',
+            'Always choosing the locally optimal choice at each step',
+            'Using recursion without memoization',
+            'Sorting data before searching'
+          ],
+          correct: 0
+        },
+        {
+          id: 13, subject: 'Networking', marks: 2,
+          text: 'Which protocol is used for secure data transmission over the internet?',
+          options: ['FTP', 'HTTP', 'SMTP', 'HTTPS / TLS'],
+          correct: 3
+        },
+        {
+          id: 14, subject: 'Operating Systems', marks: 2,
+          text: 'Virtual memory allows a computer to compensate for physical memory shortages by temporarily transferring data to:',
+          options: ['CPU cache', 'Registers', 'Disk storage', 'ROM'],
+          correct: 2
+        },
+        {
+          id: 15, subject: 'Databases', marks: 2,
+          text: 'Which of the following is NOT a property of a database transaction (ACID)?',
+          options: ['Atomicity', 'Consistency', 'Independence', 'Durability'],
+          correct: 2
+        }
+      ];
+
+      /* ──────────────────────────────────────────────────────────
+         EXAM STATE
+         Persisted in sessionStorage under EXAM_ID so the student
+         can refresh without losing progress.
+         ────────────────────────────────────────────────────────── */
+      var STATE_KEY = 'exam_state_' + EXAM_ID;
+
+      /** @type {{ answers: (number|null)[], visited: boolean[], marked: boolean[] }} */
+      var examState;
+
+      function loadState() {
+        try {
+          var raw = sessionStorage.getItem(STATE_KEY);
+          if (raw) {
+            var parsed = JSON.parse(raw);
+            // Validate shape before trusting it
+            if (parsed && Array.isArray(parsed.answers) &&
+                parsed.answers.length === TOTAL_QUESTIONS) {
+              return parsed;
+            }
+          }
+        } catch (_) { /* ignore parse errors */ }
+        return null;
+      }
+
+      function saveState() {
+        try {
+          sessionStorage.setItem(STATE_KEY, JSON.stringify(examState));
+        } catch (_) { /* quota exceeded — ignore */ }
+      }
+
+      function clearState() {
+        try { sessionStorage.removeItem(STATE_KEY); } catch (_) {}
+      }
+
+      var storedState = loadState();
+      if (storedState) {
+        examState = storedState;
+        if (window.AppUtils) {
+          window.AppUtils.showToast('Exam session restored from your previous visit.', 'info');
+        }
+      } else {
+        examState = {
+          answers: new Array(TOTAL_QUESTIONS).fill(null),
+          visited: new Array(TOTAL_QUESTIONS).fill(false),
+          marked:  new Array(TOTAL_QUESTIONS).fill(false)
+        };
+      }
+
+      var currentIndex = 0; // 0-based
+
+      /* ── DOM refs ── */
+      var timerDisplay   = document.getElementById('timer-display');
+      var examTimerEl    = document.getElementById('exam-timer');
+      var topbarQcount   = document.getElementById('topbar-qcount');
+      var questionLabel  = document.getElementById('question-label');
+      var questionSubTag = document.getElementById('question-subject-tag');
+      var questionMarks  = document.getElementById('question-marks');
+      var questionText   = document.getElementById('question-text');
+      var optionsList    = document.getElementById('options-list');
+      var paletteGrid    = document.getElementById('palette-grid');
+      var btnPrev        = document.getElementById('btn-prev');
+      var btnMarkReview  = document.getElementById('btn-mark-review');
+      var btnSaveNext    = document.getElementById('btn-save-next');
+      var btnOpenSubmit  = document.getElementById('btn-open-submit');
+      var submitModal    = document.getElementById('submit-modal');
+      var btnCancelSub   = document.getElementById('btn-cancel-submit');
+      var btnConfirmSub  = document.getElementById('btn-confirm-submit');
+      var autosubOverlay = document.getElementById('autosubmit-overlay');
+      var topbarStudent  = document.getElementById('topbar-student');
+
+      /* ── Populate student name from Auth ── */
+      if (window.Auth && window.Auth.getUser) {
+        var u = window.Auth.getUser();
+        if (u && u.name) topbarStudent.textContent = u.name;
+      }
+
+      /* ──────────────────────────────────────────────────────────
+         TIMER — delegates to AppUtils.createCountdownTimer which
+         saves remaining seconds in sessionStorage automatically.
+         ────────────────────────────────────────────────────────── */
+      var examTimer;
+      if (window.AppUtils && typeof window.AppUtils.createCountdownTimer === 'function') {
+        examTimer = window.AppUtils.createCountdownTimer(
+          EXAM_DURATION,
+          function onTick(remaining) {
+            /* Update display */
+            var mins = Math.floor(remaining / 60);
+            var secs = remaining % 60;
+            var display = (mins < 10 ? '0' : '') + mins + ':' + (secs < 10 ? '0' : '') + secs;
+            timerDisplay.textContent = display;
+
+            /* Warning styles when < 5 minutes */
+            if (remaining < 300) {
+              examTimerEl.classList.add('timer--warning');
+            }
+          },
+          function onExpire() {
+            /* Auto-submit */
+            autosubOverlay.classList.add('visible');
+            submitExam(true);
+          },
+          EXAM_ID
+        );
+      } else {
+        /* Fallback timer if AppUtils not loaded */
+        var _remaining = EXAM_DURATION;
+        var _iv = setInterval(function () {
+          _remaining--;
+          var m = Math.floor(_remaining / 60);
+          var s = _remaining % 60;
+          timerDisplay.textContent = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+          if (_remaining < 300) examTimerEl.classList.add('timer--warning');
+          if (_remaining <= 0) {
+            clearInterval(_iv);
+            autosubOverlay.classList.add('visible');
+            submitExam(true);
+          }
+        }, 1000);
+      }
+
+      /* ──────────────────────────────────────────────────────────
+         RENDER FUNCTIONS
+         ────────────────────────────────────────────────────────── */
+
+      /** Renders the current question and all palette buttons */
+      function renderQuestion(index) {
+        var q = sampleQuestions[index];
+
+        /* Mark as visited */
+        examState.visited[index] = true;
+        saveState();
+
+        /* Topbar count */
+        topbarQcount.textContent = 'Q ' + (index + 1) + ' / ' + TOTAL_QUESTIONS;
+
+        /* Question meta */
+        questionLabel.textContent  = 'Question ' + (index + 1) + ' of ' + TOTAL_QUESTIONS;
+        questionSubTag.textContent = q.subject;
+        questionMarks.textContent  = q.marks + ' Marks';
+
+        /* Question text — textContent only (XSS safe) */
+        questionText.textContent = q.text;
+
+        /* Options — built via DOM API (never innerHTML with user data) */
+        optionsList.innerHTML = '';
+        var labels = ['A', 'B', 'C', 'D'];
+        q.options.forEach(function (optText, i) {
+          var li = document.createElement('li');
+          li.setAttribute('role', 'radio');
+          li.setAttribute('aria-checked', examState.answers[index] === i ? 'true' : 'false');
+          li.setAttribute('tabindex', '0');
+
+          li.className = 'option-card' +
+            (examState.answers[index] === i ? ' selected' : '');
+
+          var circle = document.createElement('span');
+          circle.className = 'option-label-circle';
+          circle.textContent = labels[i];
+          circle.setAttribute('aria-hidden', 'true');
+
+          var text = document.createElement('span');
+          text.className = 'option-text';
+          text.textContent = optText; // textContent — safe
+
+          li.appendChild(circle);
+          li.appendChild(text);
+
+          /* Click handler */
+          li.addEventListener('click', function () {
+            selectOption(index, i);
+          });
+
+          /* Keyboard handler */
+          li.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              selectOption(index, i);
+            }
+          });
+
+          optionsList.appendChild(li);
+        });
+
+        /* Show/hide Submit button: visible from Q5 (index ≥ 4) */
+        btnOpenSubmit.style.display = (index >= 4) ? 'flex' : 'none';
+
+        /* Prev button state */
+        btnPrev.disabled = (index === 0);
+
+        /* Review button state */
+        btnMarkReview.style.background = examState.marked[index] ? '#fff3cd' : '';
+        btnMarkReview.style.color      = examState.marked[index] ? '#c67700' : '';
+
+        /* Palette */
+        renderPalette(index);
+      }
+
+      /** Selects an answer option */
+      function selectOption(qIndex, optionIndex) {
+        examState.answers[qIndex] = optionIndex;
+        saveState();
+        /* Re-render options to update selected state */
+        var cards = optionsList.querySelectorAll('.option-card');
+        cards.forEach(function (card, i) {
+          card.classList.toggle('selected', i === optionIndex);
+          card.setAttribute('aria-checked', i === optionIndex ? 'true' : 'false');
+          card.querySelector('.option-label-circle'); // already updated by toggle
+        });
+        renderPalette(currentIndex);
+      }
+
+      /** Renders the palette grid */
+      function renderPalette(currentIdx) {
+        paletteGrid.innerHTML = '';
+        for (var i = 0; i < TOTAL_QUESTIONS; i++) {
+          var btn = document.createElement('button');
+          btn.className = 'palette-btn';
+          btn.textContent = String(i + 1);
+          btn.setAttribute('role', 'listitem');
+          btn.setAttribute('aria-label', 'Go to question ' + (i + 1));
+
+          /* State classes */
+          if (i === currentIdx) {
+            btn.classList.add('state-current');
+          } else if (examState.marked[i]) {
+            btn.classList.add('state-review');
+          } else if (examState.answers[i] !== null) {
+            btn.classList.add('state-answered');
+          } else if (examState.visited[i]) {
+            btn.classList.add('state-not-ans');
+          } else {
+            btn.classList.add('state-not-visited');
+          }
+
+          /* Navigate on click */
+          (function (idx) {
+            btn.addEventListener('click', function () {
+              currentIndex = idx;
+              renderQuestion(currentIndex);
+            });
+          }(i));
+
+          paletteGrid.appendChild(btn);
+        }
+      }
+
+      /* ──────────────────────────────────────────────────────────
+         NAVIGATION HANDLERS
+         ────────────────────────────────────────────────────────── */
+
+      btnPrev.addEventListener('click', function () {
+        if (currentIndex > 0) {
+          currentIndex--;
+          renderQuestion(currentIndex);
+        }
+      });
+
+      btnSaveNext.addEventListener('click', function () {
+        /* Unmark review if moving forward after answering */
+        if (examState.answers[currentIndex] !== null) {
+          examState.marked[currentIndex] = false;
+        }
+        saveState();
+        if (currentIndex < TOTAL_QUESTIONS - 1) {
+          currentIndex++;
+          renderQuestion(currentIndex);
+        } else {
+          openSubmitModal();
+        }
+      });
+
+      btnMarkReview.addEventListener('click', function () {
+        examState.marked[currentIndex] = !examState.marked[currentIndex];
+        saveState();
+        btnMarkReview.style.background = examState.marked[currentIndex] ? '#fff3cd' : '';
+        btnMarkReview.style.color      = examState.marked[currentIndex] ? '#c67700' : '';
+        renderPalette(currentIndex);
+        if (window.AppUtils) {
+          var msg = examState.marked[currentIndex]
+            ? 'Question marked for review.'
+            : 'Review mark removed.';
+          window.AppUtils.showToast(msg, 'info', 2000);
+        }
+      });
+
+      /* ──────────────────────────────────────────────────────────
+         SUBMIT MODAL
+         ────────────────────────────────────────────────────────── */
+
+      function openSubmitModal() {
+        /* Tally stats */
+        var answered = 0, notAnswered = 0, review = 0;
+        for (var i = 0; i < TOTAL_QUESTIONS; i++) {
+          if (examState.answers[i] !== null) answered++;
+          else notAnswered++;
+          if (examState.marked[i]) review++;
+        }
+        document.getElementById('modal-answered').textContent     = answered;
+        document.getElementById('modal-not-answered').textContent = notAnswered;
+        document.getElementById('modal-review').textContent       = review;
+
+        submitModal.classList.add('modal--open');
+      }
+
+      btnOpenSubmit.addEventListener('click', openSubmitModal);
+
+      btnCancelSub.addEventListener('click', function () {
+        submitModal.classList.remove('modal--open');
+      });
+
+      /* Close modal on backdrop click */
+      submitModal.addEventListener('click', function (e) {
+        if (e.target === submitModal) submitModal.classList.remove('modal--open');
+      });
+
+      btnConfirmSub.addEventListener('click', function () {
+        submitModal.classList.remove('modal--open');
+        submitExam(false);
+      });
+
+      /* ──────────────────────────────────────────────────────────
+         SUBMIT EXAM
+         ────────────────────────────────────────────────────────── */
+
+      function submitExam(autoSubmitted) {
+        /* Disable before-unload warning so redirect is clean */
+        if (window.AppUtils && typeof window.AppUtils.beforeUnloadWarning === 'function') {
+          window.AppUtils.beforeUnloadWarning(false);
+        }
+
+        /* Stop timer */
+        if (examTimer && typeof examTimer.stop === 'function') examTimer.stop();
+
+        /* Calculate results */
+        var correct = 0, attempted = 0;
+        for (var i = 0; i < TOTAL_QUESTIONS; i++) {
+          if (examState.answers[i] !== null) {
+            attempted++;
+            if (examState.answers[i] === sampleQuestions[i].correct) correct++;
+          }
+        }
+
+        var totalMarks    = TOTAL_QUESTIONS * 2;
+        var marksObtained = correct * 2;
+        var percentage    = Math.round((marksObtained / totalMarks) * 100);
+        var passed        = marksObtained >= 18;
+        var timeRemaining = examTimer ? examTimer.getRemaining() : 0;
+        var timeTaken     = EXAM_DURATION - timeRemaining;
+        var timeTakenStr  = Math.floor(timeTaken / 60) + ':' +
+                            (timeTaken % 60 < 10 ? '0' : '') + (timeTaken % 60);
+
+        /* Build result payload for result.html */
+        var resultPayload = {
+          examId:        EXAM_ID,
+          examTitle:     'Computer Science Fundamentals',
+          subject:       'Computer Science',
+          submittedAt:   new Date().toISOString(),
+          autoSubmitted: autoSubmitted,
+          totalQuestions:TOTAL_QUESTIONS,
+          attempted:     attempted,
+          correct:       correct,
+          incorrect:     attempted - correct,
+          notAttempted:  TOTAL_QUESTIONS - attempted,
+          marksObtained: marksObtained,
+          totalMarks:    totalMarks,
+          passMark:      18,
+          percentage:    percentage,
+          passed:        passed,
+          timeTaken:     timeTakenStr,
+          answers:       examState.answers
+        };
+
+        /* Persist result for result.html (non-sensitive UX data) */
+        try {
+          sessionStorage.setItem('exam_result_' + EXAM_ID, JSON.stringify(resultPayload));
+        } catch (_) {}
+
+        /* Clear exam state */
+        clearState();
+
+        /* Redirect to result page */
+        setTimeout(function () {
+          window.location.href = 'result.html';
+        }, autoSubmitted ? 2500 : 800);
+      }
+
+      /* ──────────────────────────────────────────────────────────
+         COPY-PASTE DETERRENT (UX only — not a security control)
+         NOTE: This prevents casual copy-paste as a UX measure.
+         A determined user can bypass this via DevTools.
+         Real exam security requires server-side access controls.
+         ────────────────────────────────────────────────────────── */
+      var questionArea = document.getElementById('question-text-area');
+      if (questionArea) {
+        questionArea.addEventListener('copy',       function (e) { e.preventDefault(); });
+        questionArea.addEventListener('cut',        function (e) { e.preventDefault(); });
+        questionArea.addEventListener('contextmenu',function (e) { e.preventDefault(); });
+      }
+
+      /* ──────────────────────────────────────────────────────────
+         INITIAL RENDER
+         ────────────────────────────────────────────────────────── */
+      document.addEventListener('DOMContentLoaded', function () {
+        renderQuestion(currentIndex);
+      });
+
+      /* If DOM already loaded (script at end of body), render now */
+      if (document.readyState !== 'loading') {
+        renderQuestion(currentIndex);
+      }
+
+    }());
+  </script>
+</body>
+</html>
